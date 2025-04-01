@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   title: 'Project Showcase',
   description: 'A platform for developers to showcase their projects',
   generator: 'Next.js',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
