@@ -1,43 +1,80 @@
-import { MongoClient, MongoClientOptions } from 'mongodb';
+import mongoose, { ConnectOptions } from 'mongoose';
 
-if (!process.env.MONGODB_URI) {
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/project-showcase';
+
+if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable');
 }
 
-const uri = process.env.MONGODB_URI;
-const options: MongoClientOptions = {
-  maxPoolSize: 10,
-  minPoolSize: 5,
-  maxIdleTimeMS: 60000,
-  connectTimeoutMS: 10000,
-  socketTimeoutMS: 45000,
-};
+/**
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development. This prevents connections growing exponentially
+ * during API Route usage.
+ */
+type Mongoose = typeof mongoose;
 
-// Extend the NodeJS global type
+interface MongooseConnection {
+  conn: Mongoose | null;
+  promise: Promise<Mongoose> | null;
+}
+
+// Extend NodeJS global type declaration
 declare global {
-  var _mongoClientPromise: Promise<MongoClient>;
-  namespace NodeJS {
-    interface Global {
-      _mongoClientPromise: Promise<MongoClient>;
+  var mongooseConnection: MongooseConnection | undefined;
+}
+
+let cached = global.mongooseConnection || { conn: null, promise: null };
+
+global.mongooseConnection = cached;
+
+async function dbConnect() {
+  if (cached.conn) {
+    if (mongoose.connection.readyState === 1) {
+      console.log('Using existing MongoDB connection');
+      return cached.conn;
+    } else {
+      console.log('Existing connection is broken, reconnecting...');
+      cached.conn = null;
+      cached.promise = null;
     }
   }
-}
 
-// Create a cached connection variable
-let clientPromise: Promise<MongoClient>;
+  if (!cached.promise) {
+    const opts: ConnectOptions = {
+      bufferCommands: false,
+      maxPoolSize: 10,
+      minPoolSize: 5,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      heartbeatFrequencyMS: 1000,
+      connectTimeoutMS: 10000,
+    };
 
-if (process.env.NODE_ENV === 'development') {
-  // In development mode, use a global variable to maintain connection across hot reloads
-  if (!global._mongoClientPromise) {
-    const client = new MongoClient(uri, options);
-    global._mongoClientPromise = client.connect();
+    console.log('MongoDB URI configured:', MONGODB_URI ? 'Yes' : 'No');
+    console.log('Connecting to MongoDB...');
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log('MongoDB connection successful!');
+      return mongoose;
+    }).catch((error) => {
+      console.error('MongoDB connection error:', error);
+      
+      if (error.message && error.message.includes('bad auth')) {
+        throw new Error('MongoDB authentication failed. Please check your username and password in the MONGODB_URI');
+      }
+      
+      throw error;
+    });
   }
-  clientPromise = global._mongoClientPromise;
-} else {
-  // In production mode, create a new client for each connection
-  const client = new MongoClient(uri, options);
-  clientPromise = client.connect();
+
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (error) {
+    cached.promise = null;
+    cached.conn = null;
+    console.error('MongoDB connection error in dbConnect:', error);
+    throw error;
+  }
 }
 
-// Export the promisified client
-export default clientPromise;
+export default dbConnect;
