@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "postinstall": "pnpm rebuild bcryptjs",
     "start": "next start",
     "build": "next build",
-    "postinstall": "pnpm rebuild bcrypt",
-    "lint": "next lint",
+    "dev": "next dev",
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "latest",
@@ -40,7 +40,7 @@
     "@radix-ui/react-toggle-group": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.6",
     "autoprefixer": "^10.4.20",
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.6.0",
     "clsx": "^2.1.1",
@@ -70,7 +70,7 @@
     "zod": "latest"
   },
   "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
+    "@types/bcryptjs": "^2.4.3",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
