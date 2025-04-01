@@ -1,30 +1,34 @@
-import mongoose from 'mongoose';
+import mongoose, { ConnectOptions } from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/project-showcase';
-
-if (!MONGODB_URI) {
+if (!process.env.MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable');
 }
+
+const MONGODB_URI = process.env.MONGODB_URI;
 
 /**
  * Global is used here to maintain a cached connection across hot reloads
  * in development. This prevents connections growing exponentially
  * during API Route usage.
  */
+type Mongoose = typeof mongoose;
+
 interface MongooseConnection {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
+  conn: Mongoose | null;
+  promise: Promise<Mongoose> | null;
 }
 
+// Extend NodeJS global type declaration
 declare global {
-  var mongoose: MongooseConnection | undefined;
+  var mongooseConnection: MongooseConnection | undefined;
 }
 
-let cached: MongooseConnection = global.mongoose ?? { conn: null, promise: null };
+const cached: MongooseConnection = global.mongooseConnection ?? {
+  conn: null,
+  promise: null
+};
 
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
+global.mongooseConnection = cached;
 
 async function dbConnect() {
   if (cached.conn) {
@@ -40,43 +44,43 @@ async function dbConnect() {
   }
 
   if (!cached.promise) {
-    const opts = {
+    const opts: ConnectOptions = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds instead of default 30
-      heartbeatFrequencyMS: 1000,     // Check connection more frequently 
+      maxPoolSize: 10,
+      minPoolSize: 5,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      heartbeatFrequencyMS: 1000,
+      connectTimeoutMS: 10000,
     };
 
     console.log('MongoDB URI configured:', MONGODB_URI ? 'Yes' : 'No');
     console.log('Connecting to MongoDB...');
-    
-    cached.promise = mongoose.connect(MONGODB_URI, opts)
-      .then((mongoose) => {
-        console.log('MongoDB connection successful!');
-        return mongoose;
-      })
-      .catch((error) => {
-        console.error('MongoDB connection error:', error);
-        
-        // Handle auth errors specifically
-        if (error.message && error.message.includes('bad auth')) {
-          throw new Error('MongoDB authentication failed. Please check your username and password in the MONGODB_URI');
-        }
-        
-        // Re-throw the original error
-        throw error;
-      });
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log('MongoDB connection successful!');
+      return mongoose;
+    }).catch((error) => {
+      console.error('MongoDB connection error:', error);
+      
+      // Handle auth errors specifically
+      if (error.message && error.message.includes('bad auth')) {
+        throw new Error('MongoDB authentication failed. Please check your username and password in the MONGODB_URI');
+      }
+      
+      // Re-throw the original error
+      throw error;
+    });
   }
 
   try {
     cached.conn = await cached.promise;
-  } catch (e) {
+    return cached.conn;
+  } catch (error) {
     cached.promise = null;
     cached.conn = null;
-    console.error('MongoDB connection error in dbConnect:', e);
-    throw e;
+    console.error('MongoDB connection error in dbConnect:', error);
+    throw error;
   }
-
-  return cached.conn;
 }
 
 export default dbConnect;
