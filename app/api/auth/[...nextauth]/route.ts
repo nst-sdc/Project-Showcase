@@ -43,6 +43,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials): Promise<AuthUser | null> {
         try {
           if (!credentials?.email || !credentials?.password) {
+            console.log('Error: Missing credentials');
             throw new Error("Email and password are required");
           }
 
@@ -54,19 +55,23 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Database connection failed. Please check your MongoDB configuration.");
           }
 
+          console.log('Searching for user with email:', credentials.email);
           // Find user by email
           const user = await User.findOne({ email: credentials.email }).select("+password");
           console.log("User search complete", user ? "User found" : "No user found");
 
           if (!user) {
+            console.log('Error: No user found with this email');
             throw new Error("No user found with this email");
           }
 
+          console.log('Comparing passwords');
           // Compare passwords
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
           console.log("Password validation:", isPasswordValid ? "Valid" : "Invalid");
 
           if (!isPasswordValid) {
+            console.log('Error: Invalid password');
             throw new Error("Invalid password");
           }
 

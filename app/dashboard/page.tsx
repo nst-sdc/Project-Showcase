@@ -131,40 +131,20 @@ export default function DashboardPage() {
       formData.append("description", values.description)
       formData.append("githubUsername", values.githubUsername)
 
-      // For development/testing purposes
-      if (process.env.NODE_ENV === "development") {
-        // Simulate successful project addition
-        setTimeout(() => {
-          toast({
-            title: "Project added!",
-            description: "Your project has been successfully added.",
-          })
+      // Call the API to add the project to MongoDB
+      const result = await addProject(formData)
+      
+      toast({
+        title: "Project added!",
+        description: "Your project has been successfully added to the database.",
+      })
 
-          // Reset the form
-          form.reset()
-          setScreenshot(null)
+      // Reset the form
+      form.reset()
+      setScreenshot(null)
 
-          // Switch to the projects tab
-          setActiveTab("projects")
-
-          setIsLoading(false)
-        }, 1000)
-      } else {
-        // Production project addition with real API
-        await addProject(formData)
-
-        toast({
-          title: "Project added!",
-          description: "Your project has been successfully added.",
-        })
-
-        // Reset the form
-        form.reset()
-        setScreenshot(null)
-
-        // Switch to the projects tab
-        setActiveTab("projects")
-      }
+      // Switch to the projects tab
+      setActiveTab("projects")
     } catch (error) {
       console.error("Error adding project:", error)
       toast({

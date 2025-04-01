@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Trash2 } from "lucide-react"
 import { useSession } from "next-auth/react"
 
@@ -49,7 +49,7 @@ export function ProjectList({ searchTerm = "", filterByUser = false, onProjectsC
       await deleteProject(projectId)
       
       // Update local state
-      setProjects(prev => prev.filter(project => project.id !== projectId))
+      setProjects(prev => prev.filter(project => (project._id || project.id) !== projectId))
       
       toast({
         title: "Project deleted",
@@ -73,47 +73,47 @@ export function ProjectList({ searchTerm = "", filterByUser = false, onProjectsC
     }
   }
 
-  // Fetch projects
-  useEffect(() => {
-    const fetchProjects = async () => {
+  // Fetch projects - using useCallback to prevent recreation on each render
+  const fetchProjects = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      let fetchedProjects: Project[] = []
+
+      // Call the appropriate API based on the filter
       try {
-        setIsLoading(true)
-        setError(null)
-
-        let fetchedProjects: Project[] = []
-
-        // Call the appropriate API based on the filter
-        try {
-          if (filterByUser && userId) {
-            // Get only the current user's projects
-            fetchedProjects = await getUserProjects()
-            console.log("Fetched user projects:", fetchedProjects.length)
-          } else {
-            // Get all projects
-            fetchedProjects = await getAllProjects()
-            console.log("Fetched all projects:", fetchedProjects.length)
-          }
-        } catch (apiError) {
-          console.error("API error fetching projects:", apiError)
-          throw new Error("Failed to load projects from database")
+        if (filterByUser && userId) {
+          // Get only the current user's projects
+          fetchedProjects = await getUserProjects()
+          console.log("Fetched user projects:", fetchedProjects.length)
+        } else {
+          // Get all projects
+          fetchedProjects = await getAllProjects()
+          console.log("Fetched all projects:", fetchedProjects.length)
         }
-
-        setProjects(fetchedProjects)
-      } catch (error) {
-        console.error("Error fetching projects:", error)
-        setError(error instanceof Error ? error.message : "Failed to load projects. Please try again.")
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to load projects. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
+      } catch (apiError) {
+        console.error("API error fetching projects:", apiError)
+        throw new Error("Failed to load projects from database")
       }
-    }
 
-    fetchProjects()
+      setProjects(fetchedProjects)
+    } catch (error) {
+      console.error("Error fetching projects:", error)
+      setError(error instanceof Error ? error.message : "Failed to load projects. Please try again.")
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to load projects. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }, [toast, filterByUser, userId])
+
+  useEffect(() => {
+    fetchProjects()
+  }, [fetchProjects])
 
   // Filter projects based on search term
   useEffect(() => {
@@ -234,7 +234,7 @@ export function ProjectList({ searchTerm = "", filterByUser = false, onProjectsC
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filteredProjects.map((project) => (
-          <div key={project.id} className="relative group">
+          <div key={project._id || project.id} className="relative group">
             <ProjectCard project={project} />
             
             {/* Only show delete button for the user's own projects */}
@@ -243,7 +243,12 @@ export function ProjectList({ searchTerm = "", filterByUser = false, onProjectsC
                 variant="destructive"
                 size="icon"
                 className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => project.id && setProjectToDelete(project.id)}
+                onClick={() => {
+                  const projectId = project._id || project.id;
+                  if (projectId) {
+                    setProjectToDelete(projectId);
+                  }
+                }}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>

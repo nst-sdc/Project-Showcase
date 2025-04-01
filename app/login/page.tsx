@@ -42,11 +42,14 @@ export default function LoginPage() {
     setLoginError(null)
     
     try {
+      console.log('Attempting login with email:', values.email);
+      
       // Check URL for existing error
       const searchParams = new URLSearchParams(window.location.search)
       const urlError = searchParams.get("error")
       
       if (urlError) {
+        console.log('Found error in URL:', urlError);
         // Clear the error from the URL
         const newUrl = window.location.pathname
         window.history.replaceState({}, document.title, newUrl)
@@ -59,7 +62,10 @@ export default function LoginPage() {
         password: values.password,
       })
       
+      console.log('Authentication result:', result);
+      
       if (result?.error) {
+        console.log('Authentication error:', result.error);
         // Handle error messages
         let errorMessage = "Login failed. Please check your credentials."
         
@@ -82,6 +88,7 @@ export default function LoginPage() {
       }
       
       // Success case
+      console.log('Login successful! Redirecting to dashboard');
       toast({
         title: "Login successful!",
         description: "Welcome back to ProjectShowcase.",
@@ -157,4 +164,3 @@ export default function LoginPage() {
     </div>
   )
 }
-
