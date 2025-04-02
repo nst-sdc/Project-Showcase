@@ -127,7 +127,7 @@ export default function SignupPage() {
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} />
+                      <Input placeholder="John Doe" autoComplete="name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -140,7 +140,7 @@ export default function SignupPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="john@example.com" {...field} />
+                      <Input type="email" placeholder="john@example.com" autoComplete="username" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,7 +153,7 @@ export default function SignupPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input type="password" autoComplete="new-password" {...field} />
                     </FormControl>
                     <FormDescription>At least 8 characters</FormDescription>
                     <FormMessage />
@@ -167,7 +167,7 @@ export default function SignupPage() {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input type="password" autoComplete="new-password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -180,7 +180,7 @@ export default function SignupPage() {
                   <FormItem>
                     <FormLabel>GitHub URL</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://github.com/username" {...field} />
+                      <Input placeholder="https://github.com/username" autoComplete="url" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
