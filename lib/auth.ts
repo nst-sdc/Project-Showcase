@@ -107,11 +107,17 @@ export const logout = async (): Promise<void> => {
  * Check if the user is authenticated using NextAuth
  * @returns Boolean indicating authentication status
  */
-export const isAuthenticated = (): boolean => {
+export const isAuthenticated = async (): Promise<boolean> => {
   if (typeof window === 'undefined') return false;
   
-  // We can check if the session exists in localStorage as a simple client-side check
-  return document.cookie.indexOf('next-auth.session-token') > -1;
+  try {
+    // Use getSession for a more reliable check
+    const session = await getSession();
+    return !!session;
+  } catch (error) {
+    console.error('Error checking authentication status:', error);
+    return false;
+  }
 };
 
 /**

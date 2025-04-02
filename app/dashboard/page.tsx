@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Filter, Search } from "lucide-react"
+import { useSession } from "next-auth/react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,7 +20,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { ProjectList } from "@/components/project-list"
 import { DashboardHeader } from "@/components/dashboard-header"
-import { getUserInfo, isAuthenticated } from "@/lib/auth"
 import { addProject } from "@/lib/api"
 
 const projectSchema = z.object({
@@ -52,35 +52,7 @@ export default function DashboardPage() {
   const [currentUsername, setCurrentUsername] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("projects")
 
-  // Check if user is authenticated
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        setIsClient(true)
-  
-        if (!isAuthenticated()) {
-          console.log("Not authenticated, redirecting to login")
-          router.push("/login")
-          return
-        }
-  
-        // Get current user info for filtering
-        const userInfo = await getUserInfo()
-        if (userInfo) {
-          setCurrentUsername(userInfo.name)
-  
-          // Pre-fill the GitHub username in the form
-          form.setValue("githubUsername", userInfo.name || '')
-        }
-      } catch (error) {
-        console.error("Authentication error:", error)
-        setAuthError("Authentication error. Please try logging in again.")
-      }
-    }
-
-    checkAuth()
-  }, [router])
-
+  // Initialize form before using it in useEffect
   const form = useForm<z.infer<typeof projectSchema>>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
@@ -91,6 +63,36 @@ export default function DashboardPage() {
       githubUsername: "",
     },
   })
+
+  // Check if user is authenticated using NextAuth
+  const { data: session, status } = useSession()
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      console.log("Not authenticated, redirecting to login")
+      // Don't redirect if we're already being redirected by middleware
+      // This prevents potential redirect loops
+      if (typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search)
+        if (!searchParams.has("callbackUrl")) {
+          router.replace("/login") 
+        }
+      }
+      return
+    }
+    
+    if (status === "authenticated" && session?.user) {
+      // Set current username for filtering
+      setCurrentUsername(session.user.name || null)
+      
+      // Pre-fill the GitHub username in the form
+      form.setValue("githubUsername", session.user.name || '')
+    }
+  }, [status, session, router, form])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -119,6 +121,16 @@ export default function DashboardPage() {
       })
       return
     }
+    
+    // Check if user is authenticated
+    if (status !== "authenticated" || !session?.user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to add a project.",
+        variant: "destructive",
+      })
+      return
+    }
 
     setIsLoading(true)
 
@@ -130,7 +142,7 @@ export default function DashboardPage() {
       formData.append("hostedLink", values.hostedLink)
       formData.append("githubLink", values.githubLink)
       formData.append("description", values.description)
-      formData.append("githubUsername", values.githubUsername)
+      formData.append("githubUsername", values.githubUsername || session.user.name || '')
 
       // Call the API to add the project to MongoDB
       const result = await addProject(formData)
@@ -158,7 +170,8 @@ export default function DashboardPage() {
     }
   }
 
-  if (!isClient) {
+  // Show loading state when NextAuth is checking the session or when client-side rendering hasn't started
+  if (!isClient || status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -169,6 +182,7 @@ export default function DashboardPage() {
     )
   }
 
+  // Show error state if there's an authentication error
   if (authError) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -181,8 +195,7 @@ export default function DashboardPage() {
             <Button
               className="w-full mt-4"
               onClick={() => {
-                localStorage.removeItem("token")
-                router.push("/login")
+                router.replace("/login")
               }}
             >
               Back to Login
@@ -191,6 +204,11 @@ export default function DashboardPage() {
         </Card>
       </div>
     )
+  }
+  
+  // If not authenticated, don't render the page content
+  if (status === "unauthenticated") {
+    return null;
   }
 
   return (
