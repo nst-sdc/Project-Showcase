@@ -70,9 +70,6 @@ export function DashboardHeader() {
           <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
             Dashboard
           </Link>
-          <Link href="/projects" className="text-sm font-medium hover:text-primary transition-colors">
-            Browse Projects
-          </Link>
         </nav>
         <div className="flex items-center gap-4">
           <DropdownMenu>

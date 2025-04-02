@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -47,7 +48,7 @@ export default function DashboardPage() {
   const [screenshot, setScreenshot] = useState<File | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [showOnlyMyProjects, setShowOnlyMyProjects] = useState(false)
+  const [showOnlyMyProjects, setShowOnlyMyProjects] = useState(true)
   const [currentUsername, setCurrentUsername] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("projects")
 
@@ -202,27 +203,28 @@ export default function DashboardPage() {
             <TabsTrigger value="add">Add Project</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="projects" className="space-y-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-2xl font-bold tracking-tight">Projects</h2>
-              <div className="flex items-center gap-2">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <TabsContent value="projects" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
                   <Input
                     placeholder="Search projects..."
                     value={searchTerm}
                     onChange={handleSearch}
-                    className="w-full pl-8"
+                    className="max-w-sm"
                   />
                 </div>
                 <Button
-                  variant={showOnlyMyProjects ? "default" : "outline"}
-                  size="sm"
-                  onClick={toggleMyProjects}
-                  className="gap-2"
+                  variant={showOnlyMyProjects ? "outline" : "default"}
+                  onClick={() => setShowOnlyMyProjects(false)}
                 >
-                  <Filter className="h-4 w-4" />
-                  {showOnlyMyProjects ? "My Projects" : "All Projects"}
+                  All Projects
+                </Button>
+                <Button
+                  variant={showOnlyMyProjects ? "default" : "outline"}
+                  onClick={() => setShowOnlyMyProjects(true)}
+                >
+                  My Projects
                 </Button>
               </div>
             </div>

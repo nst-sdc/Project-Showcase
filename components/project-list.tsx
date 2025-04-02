@@ -7,6 +7,15 @@ import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -35,6 +44,8 @@ export function ProjectList({ searchTerm = "", filterByUser = false, onProjectsC
   const [error, setError] = useState<string | null>(null)
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const projectsPerPage = 20
   const { toast } = useToast()
   const userId = session?.user?.id
 
@@ -113,6 +124,8 @@ export function ProjectList({ searchTerm = "", filterByUser = false, onProjectsC
 
   useEffect(() => {
     fetchProjects()
+    // Reset to first page when projects are fetched
+    setCurrentPage(1)
   }, [fetchProjects])
 
   // Filter projects based on search term
@@ -134,6 +147,9 @@ export function ProjectList({ searchTerm = "", filterByUser = false, onProjectsC
     // (filterByUser determines which API endpoint we use)
 
     setFilteredProjects(filtered)
+    
+    // Reset to first page when search term changes
+    setCurrentPage(1)
   }, [projects, searchTerm])
 
   // Render loading skeleton
@@ -174,6 +190,19 @@ export function ProjectList({ searchTerm = "", filterByUser = false, onProjectsC
       </Card>
     )
   }
+
+  // Calculate pagination values
+  const indexOfLastProject = currentPage * projectsPerPage;
+  const indexOfFirstProject = indexOfLastProject - projectsPerPage;
+  const currentProjects = filteredProjects.slice(indexOfFirstProject, indexOfLastProject);
+  const totalPages = Math.ceil(filteredProjects.length / projectsPerPage);
+
+  // Handle page changes
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Render empty state
   if (filteredProjects.length === 0) {
@@ -233,7 +262,7 @@ export function ProjectList({ searchTerm = "", filterByUser = false, onProjectsC
       </AlertDialog>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredProjects.map((project) => (
+        {currentProjects.map((project) => (
           <div key={project._id || project.id} className="relative group">
             <ProjectCard project={project} />
             
@@ -256,6 +285,86 @@ export function ProjectList({ searchTerm = "", filterByUser = false, onProjectsC
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination className="mt-8">
+          <PaginationContent>
+            {/* Previous page button */}
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))} 
+                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            
+            {/* First page */}
+            {currentPage > 2 && (
+              <PaginationItem>
+                <PaginationLink onClick={() => handlePageChange(1)} className="cursor-pointer">
+                  1
+                </PaginationLink>
+              </PaginationItem>
+            )}
+            
+            {/* Ellipsis if needed */}
+            {currentPage > 3 && (
+              <PaginationItem>
+                <PaginationEllipsis />
+              </PaginationItem>
+            )}
+            
+            {/* Page before current if it exists */}
+            {currentPage > 1 && (
+              <PaginationItem>
+                <PaginationLink onClick={() => handlePageChange(currentPage - 1)} className="cursor-pointer">
+                  {currentPage - 1}
+                </PaginationLink>
+              </PaginationItem>
+            )}
+            
+            {/* Current page */}
+            <PaginationItem>
+              <PaginationLink isActive onClick={() => handlePageChange(currentPage)} className="cursor-pointer">
+                {currentPage}
+              </PaginationLink>
+            </PaginationItem>
+            
+            {/* Page after current if it exists */}
+            {currentPage < totalPages && (
+              <PaginationItem>
+                <PaginationLink onClick={() => handlePageChange(currentPage + 1)} className="cursor-pointer">
+                  {currentPage + 1}
+                </PaginationLink>
+              </PaginationItem>
+            )}
+            
+            {/* Ellipsis if needed */}
+            {currentPage < totalPages - 2 && (
+              <PaginationItem>
+                <PaginationEllipsis />
+              </PaginationItem>
+            )}
+            
+            {/* Last page if not current */}
+            {currentPage < totalPages - 1 && (
+              <PaginationItem>
+                <PaginationLink onClick={() => handlePageChange(totalPages)} className="cursor-pointer">
+                  {totalPages}
+                </PaginationLink>
+              </PaginationItem>
+            )}
+            
+            {/* Next page button */}
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))} 
+                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   )
 }

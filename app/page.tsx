@@ -41,11 +41,6 @@ export default function Home() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="/projects">
-                  <Button variant="outline" size="lg" className="w-full min-[400px]:w-auto">
-                    Browse Projects
-                  </Button>
-                </Link>
               </div>
             </div>
             <div className="flex items-center justify-center">

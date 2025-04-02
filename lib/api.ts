@@ -156,3 +156,48 @@ export const getProjectById = async (id: string): Promise<Project> => {
   }
 }
 
+// Toggle like on a project
+export const toggleProjectLike = async (id: string): Promise<{ message: string; likes: number; liked: boolean }> => {
+  try {
+    const { headers, isAuthenticated } = await getAuthHeader()
+    
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      throw new Error("Authentication required")
+    }
+
+    const response = await fetch(`${PROJECT_ENDPOINTS.project(id)}/like`, {
+      method: "POST",
+      headers,
+    })
+
+    await handleApiError(response)
+    return await response.json()
+  } catch (error) {
+    console.error("Error toggling project like:", error)
+    throw error
+  }
+}
+
+// Check if user has liked a project
+export const checkProjectLike = async (id: string): Promise<{ liked: boolean }> => {
+  try {
+    const { headers, isAuthenticated } = await getAuthHeader()
+    
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      return { liked: false }
+    }
+
+    const response = await fetch(`${PROJECT_ENDPOINTS.project(id)}/like/check`, {
+      headers,
+    })
+
+    await handleApiError(response)
+    return await response.json()
+  } catch (error) {
+    console.error("Error checking project like status:", error)
+    return { liked: false }
+  }
+}
+

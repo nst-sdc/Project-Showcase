@@ -12,6 +12,7 @@ export const PROJECT_ENDPOINTS = {
   all: `${API_URL}/projects`,
   userProjects: `${API_URL}/projects?userId=`, // Add the user ID as a query param
   project: (id: string) => `${API_URL}/projects/${id}`,
+  like: (id: string) => `${API_URL}/projects/${id}/like`,
 }
 
 // User endpoints

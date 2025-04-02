@@ -2,13 +2,13 @@ import Image from "next/image"
 import { ExternalLink, Github, Trash2, Edit2, Heart } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
 import type { Project } from "@/types/project"
-import { deleteProject, updateProject } from "@/lib/api"
+import { deleteProject, updateProject, toggleProjectLike, checkProjectLike } from "@/lib/api"
 
 interface ProjectCardProps {
   project: Project
@@ -24,7 +24,30 @@ export function ProjectCard({ project, onProjectsChange }: ProjectCardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLiking, setIsLiking] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
+  const [likeCount, setLikeCount] = useState(likes)
+  const [isAnimating, setIsAnimating] = useState(false)
   const { toast } = useToast()
+  
+  // Check if user has already liked this project
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (session?.user?.id && id) {
+        try {
+          const { liked } = await checkProjectLike(id)
+          setIsLiked(liked)
+        } catch (error) {
+          console.error("Error checking like status:", error)
+        }
+      }
+    }
+    
+    checkLikeStatus()
+  }, [id, session?.user?.id])
+
+  // Set initial like count
+  useEffect(() => {
+    setLikeCount(likes)
+  }, [likes])
 
   // Format date
   const formattedDate = new Date(createdAt || Date.now()).toLocaleDateString("en-US", {
@@ -63,19 +86,23 @@ export function ProjectCard({ project, onProjectsChange }: ProjectCardProps) {
 
     try {
       setIsLiking(true)
+      setIsAnimating(true)
       
-      // Toggle like status
-      const newLikes = isLiked ? likes - 1 : likes + 1
+      // Optimistically update UI
+      const newLikedState = !isLiked
+      setIsLiked(newLikedState)
+      setLikeCount(prevCount => newLikedState ? prevCount + 1 : Math.max(0, prevCount - 1))
       
-      // Update project in database
-      await updateProject(id, new FormData())
+      // Call the API to toggle like status
+      const response = await toggleProjectLike(id)
       
-      // Update local state
-      setIsLiked(!isLiked)
+      // Update local state with the response from the server
+      setIsLiked(response.liked)
+      setLikeCount(response.likes)
       
       toast({
-        title: isLiked ? "Liked" : "Unliked",
-        description: `Project ${isLiked ? "liked" : "unliked"} successfully`,
+        title: response.liked ? "Liked" : "Unliked",
+        description: `Project ${response.liked ? "liked" : "unliked"} successfully`,
       })
       
       if (onProjectsChange) {
@@ -83,6 +110,9 @@ export function ProjectCard({ project, onProjectsChange }: ProjectCardProps) {
       }
     } catch (error) {
       console.error("Error toggling like:", error)
+      // Revert optimistic update on error
+      setIsLiked(isLiked)
+      setLikeCount(likes)
       toast({
         title: "Error",
         description: "Failed to toggle like",
@@ -90,6 +120,10 @@ export function ProjectCard({ project, onProjectsChange }: ProjectCardProps) {
       })
     } finally {
       setIsLiking(false)
+      // Allow animation to complete before resetting
+      setTimeout(() => {
+        setIsAnimating(false)
+      }, 300)
     }
   }
 
@@ -128,12 +162,20 @@ export function ProjectCard({ project, onProjectsChange }: ProjectCardProps) {
         <Button
           variant="outline"
           size="sm"
-          className="w-full"
+          className={`w-full transition-all duration-300 ${isAnimating ? (isLiked ? 'scale-110' : 'scale-90') : ''}`}
           onClick={handleLike}
           disabled={isLiking}
         >
-          <Heart className="mr-2 h-4 w-4" fill={isLiked ? "currentColor" : "none"} />
-          {isLiked ? "Liked" : "Like"}
+          <Heart 
+            className={`mr-2 h-4 w-4 transition-all duration-300 ${isAnimating ? (isLiked ? 'scale-125' : 'scale-75') : ''}`} 
+            fill={isLiked ? "currentColor" : "none"} 
+          />
+          <span>{isLiked ? "Liked" : "Like"}</span>
+          {likeCount > 0 && (
+            <span className="ml-1 text-xs bg-primary/10 px-1.5 py-0.5 rounded-full">
+              {likeCount}
+            </span>
+          )}
         </Button>
 
         {/* Actions for project owner */}
