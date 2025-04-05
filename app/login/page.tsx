@@ -37,43 +37,44 @@ export default function LoginPage() {
     },
   })
 
+  // Update the onSubmit function to properly handle the signIn response
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true)
     setLoginError(null)
-    
+
     try {
-      console.log('Attempting login with email:', values.email);
-      
+      console.log("Attempting login with email:", values.email)
+
       // Check URL for existing error
       const searchParams = new URLSearchParams(window.location.search)
       const urlError = searchParams.get("error")
-      
+
       if (urlError) {
-        console.log('Found error in URL:', urlError);
+        console.log("Found error in URL:", urlError)
         // Clear the error from the URL
         const newUrl = window.location.pathname
         window.history.replaceState({}, document.title, newUrl)
       }
-      
+
       // Try to authenticate using credentials provider
       try {
-        const result = await signIn('credentials', {
+        const result = await signIn("credentials", {
           redirect: false, // Handle redirect manually to provide better error handling
           email: values.email,
           password: values.password,
         })
-        
-        console.log('Authentication result:', result);
-        
+
+        console.log("Authentication result:", result)
+
         if (!result) {
-          throw new Error("Authentication service unavailable. Please try again later.");
+          throw new Error("Authentication service unavailable. Please try again later.")
         }
-        
-        if (result?.error) {
-          console.log('Authentication error:', result.error);
+
+        if (result.error) {
+          console.log("Authentication error:", result.error)
           // Handle error messages
           let errorMessage = "Login failed. Please check your credentials."
-          
+
           // Extract more specific error messages
           if (result.error.includes("No user found")) {
             errorMessage = "No account found with this email address."
@@ -82,7 +83,7 @@ export default function LoginPage() {
           } else if (result.error.includes("MongoDB") || result.error.includes("database")) {
             errorMessage = "Unable to connect to database. Please try again later."
           }
-          
+
           setLoginError(errorMessage)
           toast({
             title: "Login Error",
@@ -91,36 +92,35 @@ export default function LoginPage() {
           })
           return
         }
-        
+
         // Success case
-        console.log('Login successful! Redirecting to dashboard');
+        console.log("Login successful! Redirecting to dashboard")
         toast({
           title: "Login successful!",
           description: "Welcome back to ProjectShowcase.",
         })
-        
+
         // Redirect to dashboard
         router.push("/dashboard")
       } catch (error) {
         console.error("NextAuth signIn error:", error)
         // Log additional details about the error
         if (error instanceof Error) {
-          console.error("Error name:", error.name);
-          console.error("Error message:", error.message);
-          console.error("Error stack:", error.stack);
+          console.error("Error name:", error.name)
+          console.error("Error message:", error.message)
+          console.error("Error stack:", error.stack)
         }
-        
+
         // Handle the error and show a user-friendly message
-        const errorMessage = error instanceof Error ? 
-          error.message : 
-          "Authentication failed. The server might be experiencing issues.";
-          
-        setLoginError(errorMessage);
+        const errorMessage =
+          error instanceof Error ? error.message : "Authentication failed. The server might be experiencing issues."
+
+        setLoginError(errorMessage)
         toast({
           title: "Login Error",
           description: errorMessage,
           variant: "destructive",
-        });
+        })
       }
     } catch (error) {
       console.error("Form submission error:", error)
@@ -191,3 +191,4 @@ export default function LoginPage() {
     </div>
   )
 }
+
