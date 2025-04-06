@@ -56,83 +56,61 @@ export default function LoginPage() {
       }
       
       // Try to authenticate using credentials provider
-      try {
-        const result = await signIn('credentials', {
-          redirect: false, // Handle redirect manually to provide better error handling
-          email: values.email,
-          password: values.password,
-        })
+      const result = await signIn('credentials', {
+        redirect: false,
+        email: values.email,
+        password: values.password,
+      })
+      
+      console.log('Authentication result:', result);
+      
+      if (!result) {
+        throw new Error("Authentication service unavailable. Please try again later.");
+      }
+      
+      if (result?.error) {
+        console.log('Authentication error:', result.error);
+        // Handle error messages
+        let errorMessage = "Login failed. Please check your credentials."
         
-        console.log('Authentication result:', result);
-        
-        if (!result) {
-          throw new Error("Authentication service unavailable. Please try again later.");
+        // Extract more specific error messages
+        if (result.error.includes("No user found")) {
+          errorMessage = "No account found with this email address."
+        } else if (result.error.includes("Invalid password")) {
+          errorMessage = "Invalid password. Please try again."
+        } else if (result.error.includes("MongoDB") || result.error.includes("database")) {
+          errorMessage = "Unable to connect to database. Please try again later."
         }
         
-        if (result?.error) {
-          console.log('Authentication error:', result.error);
-          // Handle error messages
-          let errorMessage = "Login failed. Please check your credentials."
-          
-          // Extract more specific error messages
-          if (result.error.includes("No user found")) {
-            errorMessage = "No account found with this email address."
-          } else if (result.error.includes("Invalid password")) {
-            errorMessage = "Invalid password. Please try again."
-          } else if (result.error.includes("MongoDB") || result.error.includes("database")) {
-            errorMessage = "Unable to connect to database. Please try again later."
-          }
-          
-          setLoginError(errorMessage)
-          toast({
-            title: "Login Error",
-            description: errorMessage,
-            variant: "destructive",
-          })
-          return
-        }
-        
-        // Success case
-        console.log('Login successful! Redirecting to dashboard');
-        toast({
-          title: "Login successful!",
-          description: "Welcome back to ProjectShowcase.",
-        })
-        
-        // Redirect to dashboard
-        router.push("/dashboard")
-      } catch (error) {
-        console.error("NextAuth signIn error:", error)
-        // Log additional details about the error
-        if (error instanceof Error) {
-          console.error("Error name:", error.name);
-          console.error("Error message:", error.message);
-          console.error("Error stack:", error.stack);
-        }
-        
-        // Handle the error and show a user-friendly message
-        const errorMessage = error instanceof Error ? 
-          error.message : 
-          "Authentication failed. The server might be experiencing issues.";
-          
-        setLoginError(errorMessage);
+        setLoginError(errorMessage)
         toast({
           title: "Login Error",
           description: errorMessage,
           variant: "destructive",
-        });
+        })
+        return
       }
+      
+      // Success case
+      console.log('Login successful! Redirecting to dashboard');
+      toast({
+        title: "Login successful!",
+        description: "Welcome back to ProjectShowcase.",
+      })
+      
+      // Redirect to dashboard
+      router.push("/dashboard")
     } catch (error) {
-      console.error("Form submission error:", error)
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again."
-      setLoginError(errorMessage)
+      console.error("Login error:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
+      setLoginError(errorMessage);
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
