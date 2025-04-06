@@ -1,4 +1,4 @@
-# Project Showcase
+# Project Showcase....
 
 A modern web application built with Next.js for showcasing and managing projects. This platform allows users to view, filter, and sort projects with a clean and intuitive interface.
 
