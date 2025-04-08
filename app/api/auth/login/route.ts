@@ -1,31 +1,57 @@
-import { NextResponse } from "next/server"
-// In a real app, you would use bcrypt to compare passwords
-// import bcrypt from "bcrypt"
-// import jwt from "jsonwebtoken"
+import { NextResponse } from "next/server";
+import dbConnect, { getCollection } from "@/lib/mongodb";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    // Connect to MongoDB first
+    await dbConnect();
+    
+    const body = await request.json();
+    const { email, password } = body;
 
     // Validate input
     if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+      return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
-    // In a real app, you would:
-    // 1. Find user by email in database
-    // 2. Compare password with hashed password
-    // 3. Generate JWT token
-    // 4. Return token in response
-
-    // For demo purposes, we'll just return a mock token
-    const token = "mock_jwt_token"
-
-    return NextResponse.json({ token }, { status: 200 })
+    // Get users collection
+    const usersCollection = await getCollection("users");
+    
+    // Find user by email in database
+    const user = await usersCollection.findOne({ email });
+    
+    if (!user) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
+    
+    // Compare password with hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user._id.toString(),
+        email: user.email
+      },
+      process.env.NEXTAUTH_SECRET as string,
+      { expiresIn: '1d' }
+    );
+    
+    // Return user information without sensitive data
+    const { password: _, ...userWithoutPassword } = user;
+    
+    return NextResponse.json({ 
+      token, 
+      user: userWithoutPassword 
+    }, { status: 200 });
   } catch (error) {
-    console.error("Error in login:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error in login:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-
