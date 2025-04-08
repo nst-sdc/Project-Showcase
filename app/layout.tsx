@@ -26,10 +26,14 @@ export default function RootLayout({
       <body className={cn(
         'min-h-screen bg-background font-sans antialiased'
       )}>
-        <ThemeProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <SessionProvider>
-            <ThemeToggle />
-            {children}
+            <div className="relative flex min-h-screen flex-col">
+              <div className="fixed top-4 right-4 z-50">
+                <ThemeToggle />
+              </div>
+              <main className="flex-1">{children}</main>
+            </div>
             <Toaster />
           </SessionProvider>
         </ThemeProvider>
