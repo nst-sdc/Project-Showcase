@@ -1,171 +1,105 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { signIn } from "next-auth/react"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { useToast } from "@/components/ui/use-toast"
-
-const loginSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  password: z.string().min(1, {
-    message: "Password is required.",
-  }),
-})
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
-  const [loginError, setLoginError] = useState<string | null>(null)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-  const form = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  })
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
-  async function onSubmit(values: z.infer<typeof loginSchema>) {
-    setIsLoading(true)
-    setLoginError(null)
-    
     try {
-      console.log('Attempting login with email:', values.email);
-      
-      // Check URL for existing error
-      const searchParams = new URLSearchParams(window.location.search)
-      const urlError = searchParams.get("error")
-      
-      if (urlError) {
-        console.log('Found error in URL:', urlError);
-        // Clear the error from the URL
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, document.title, newUrl)
-      }
-      
-      // Try to authenticate using credentials provider
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         redirect: false,
-        email: values.email,
-        password: values.password,
-      })
-      
-      console.log('Authentication result:', result);
-      
-      if (!result) {
-        throw new Error("Authentication service unavailable. Please try again later.");
-      }
-      
+        email,
+        password,
+      });
+
       if (result?.error) {
-        console.log('Authentication error:', result.error);
-        // Handle error messages
-        let errorMessage = "Login failed. Please check your credentials."
-        
-        // Extract more specific error messages
-        if (result.error.includes("No user found")) {
-          errorMessage = "No account found with this email address."
-        } else if (result.error.includes("Invalid password")) {
-          errorMessage = "Invalid password. Please try again."
-        } else if (result.error.includes("MongoDB") || result.error.includes("database")) {
-          errorMessage = "Unable to connect to database. Please try again later."
-        }
-        
-        setLoginError(errorMessage)
-        toast({
-          title: "Login Error",
-          description: errorMessage,
-          variant: "destructive",
-        })
-        return
+        setError("Invalid email or password");
+      } else {
+        // Redirect to dashboard or home page after successful login
+        router.push("/dashboard");
+        router.refresh();
       }
-      
-      // Success case
-      console.log('Login successful! Redirecting to dashboard');
-      toast({
-        title: "Login successful!",
-        description: "Welcome back to ProjectShowcase.",
-      })
-      
-      // Redirect to dashboard
-      router.push("/dashboard")
     } catch (error) {
       console.error("Login error:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
-      setLoginError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="container flex h-screen items-center justify-center py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg">
+        <div>
+          <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
+            Sign in to your account
+          </h2>
+        </div>
+        
+        {error && (
+          <div className="rounded-md bg-red-50 p-4">
+            <div className="text-sm text-red-700">{error}</div>
+          </div>
+        )}
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4 rounded-md shadow-sm">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <input
+                id="email"
                 name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="john@example.com" autoComplete="username" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                placeholder="Email address"
               />
-              <FormField
-                control={form.control}
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <input
+                id="password"
                 name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" autoComplete="current-password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                placeholder="Password"
               />
-              {loginError && <div className="text-sm text-destructive">{loginError}</div>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-primary underline">
-              Sign up
-            </Link>
-          </p>
-        </CardFooter>
-      </Card>
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-400"
+            >
+              {isLoading ? "Signing in..." : "Sign in"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  )
+  );
 }
