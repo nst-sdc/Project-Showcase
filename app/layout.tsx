@@ -5,6 +5,8 @@ import { ThemeProvider } from '@/components/providers/theme-provider'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Toaster } from '@/components/ui/toaster'
 import { cn } from '@/lib/utils'
+import { Analytics } from '@vercel/analytics/react';
+
 
 export const metadata: Metadata = {
   title: 'Project Showcase',
