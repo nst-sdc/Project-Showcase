@@ -20,6 +20,15 @@ declare module "next-auth" {
       githubUsername?: string;
     }
   }
+
+  interface User {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    role?: string;
+    image?: string;
+    githubUsername?: string;
+  }
 }
 
 // Define AuthUser type to avoid recursive reference
@@ -44,7 +53,7 @@ export const authOptions: NextAuthOptions = {
         try {
           if (!credentials?.email || !credentials?.password) {
             console.log('Error: Missing credentials');
-            throw new Error("Email and password are required");
+            return null;
           }
 
           try {
@@ -52,27 +61,36 @@ export const authOptions: NextAuthOptions = {
             console.log("Database connected successfully");
           } catch (dbError) {
             console.error("MongoDB Connection Error:", dbError);
-            throw new Error("Database connection failed. Please check your MongoDB configuration.");
+            // Don't throw, return null to show generic error
+            return null;
           }
 
           console.log('Searching for user with email:', credentials.email);
+          
           // Find user by email
-          const user = await User.findOne({ email: credentials.email }).select("+password");
+          const user = await User.findOne({ email: credentials.email.toLowerCase() }).select("+password");
           console.log("User search complete", user ? "User found" : "No user found");
-
+          
           if (!user) {
             console.log('Error: No user found with this email');
-            throw new Error("No user found with this email");
+            return null;
           }
 
           console.log('Comparing passwords');
           // Compare passwords
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+          let isPasswordValid = false;
+          try {
+            isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+          } catch (bcryptError) {
+            console.error("Password comparison error:", bcryptError);
+            return null;
+          }
+          
           console.log("Password validation:", isPasswordValid ? "Valid" : "Invalid");
-
+          
           if (!isPasswordValid) {
             console.log('Error: Invalid password');
-            throw new Error("Invalid password");
+            return null;
           }
 
           return {
@@ -85,13 +103,14 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (error) {
           console.error("Auth error:", error);
-          throw error;
+          // Return null instead of throwing to avoid 500 errors
+          return null;
         }
       },
     }),
   ],
   session: {
-    strategy: "jwt" as const,
+    strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
@@ -108,7 +127,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
-        session.user.githubUsername = token.githubUsername as string;
+        session.user.githubUsername = token.githubUsername as string || null;
       }
       return session;
     }
@@ -123,5 +142,4 @@ export const authOptions: NextAuthOptions = {
 };
 
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST, handler as PUT, handler as DELETE };
