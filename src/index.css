@@ -1,0 +1,23 @@
+/* index.css */
+
+/* CSS Variables for consistent theme */
+:root {
+  --primary-color: #4f46e5;
+  --secondary-color: #f0f4f8;
+  --text-color: #1f2937;
+  --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Reset + global styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  font-family: var(--font-main);
+  line-height: 1.6;
+}
