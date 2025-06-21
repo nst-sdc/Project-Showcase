@@ -1,7 +1,5 @@
 # Newton School of Technology Project Showcase
 
-![NST Showcase Screenshot](/public/assets/screenshot.jpg)
-
 A modern, responsive showcase platform for student projects at Newton School of Technology. This website highlights the technical skills and innovative solutions developed by NST students, serving as a bridge between talented developers and potential employers.
 
 ## Features
