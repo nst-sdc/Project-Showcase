@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="container">
         <div className="footer-content">
           <div className="footer-brand">
-            <img src="/assets/nst-logo.svg" alt="Newton School of Technology" className="footer-logo" />
+            <img src="/assets/nst-logo.png" alt="Newton School of Technology" className="footer-logo" />
             <p className="footer-description">
               Empowering the next generation of technology innovators through 
               project-based learning and industry-aligned curriculum.

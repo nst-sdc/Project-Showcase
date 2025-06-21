@@ -23,7 +23,7 @@ export default function Navbar({ onNavClick }) {
     <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
       <div className="container">
         <div className="logo">
-          <img src="/assets/nst-logo.svg" alt="Newton School of Technology" className="logo-img" />
+          <img src="/assets/nst-logo.png" alt="Newton School of Technology" className="logo-img" />
           <span className="logo-text">NST Showcase</span>
         </div>
         
