@@ -1,17 +1,21 @@
+import { FiArrowRight } from 'react-icons/fi';
+
 export default function Hero() {
   return (
     <section className="hero">
       <div className="hero-content animate-fade-in">
-        <h1 className="hero-title">Newton School of Technology</h1>
+        <h1 className="hero-title">
+          <span className="text-accent">Newton School</span> of Technology
+        </h1>
         <p className="hero-subtitle">
-          Showcasing groundbreaking projects from the next generation of tech innovators
+          Where innovation meets education. Discover groundbreaking projects from our talented students.
         </p>
         <div className="hero-cta">
           <a href="#projects" className="btn btn-primary">
-            View Projects
+            Explore Projects <FiArrowRight />
           </a>
           <a href="#contact" className="btn btn-outline">
-            Contact Students
+            Hire Talent
           </a>
         </div>
       </div>

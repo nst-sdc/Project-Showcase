@@ -1,4 +1,5 @@
-import { FaGithub, FaExternalLinkAlt, FaStar } from 'react-icons/fa';
+import { FaGithub, FaExternalLinkAlt } from 'react-icons/fa';
+import { FiUser } from 'react-icons/fi';
 
 export default function ProjectCard({ project }) {
   return (
@@ -19,14 +20,16 @@ export default function ProjectCard({ project }) {
         </div>
         <h3 className="project-title">{project.title}</h3>
         <p className="project-description">{project.description}</p>
+        
         <div className="project-technologies">
           {project.technologies.map(tech => (
             <span key={tech} className="project-tech">{tech}</span>
           ))}
         </div>
+        
         <div className="project-meta">
           <div className="project-student">
-            <span className="project-label">By:</span>
+            <FiUser size={14} />
             <span>{project.student}</span>
             <span className="project-cohort">{project.cohort}</span>
           </div>
@@ -37,6 +40,7 @@ export default function ProjectCard({ project }) {
                 target="_blank" 
                 rel="noopener noreferrer"
                 aria-label="GitHub repository"
+                className="project-link"
               >
                 <FaGithub />
               </a>
@@ -47,6 +51,7 @@ export default function ProjectCard({ project }) {
                 target="_blank" 
                 rel="noopener noreferrer"
                 aria-label="Live demo"
+                className="project-link"
               >
                 <FaExternalLinkAlt />
               </a>
