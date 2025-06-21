@@ -12,7 +12,7 @@ A modern, responsive showcase platform for student projects at Newton School of 
 
 ## Technologies Used
 
-- React 19
+- React 18
 - Vite
 - CSS Modules
 - React Icons
