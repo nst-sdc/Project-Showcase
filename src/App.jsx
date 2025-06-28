@@ -22,7 +22,6 @@ function App() {
 
   return (
     <div className="app-wrapper">
-      <Navbar onNavClick={setActivePage} />
       <main className="main-content">{renderPage()}</main>
       <Footer />
     </div>
