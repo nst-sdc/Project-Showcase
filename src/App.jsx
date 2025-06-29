@@ -9,6 +9,7 @@ import Hero from "./components/Hero";
 import Stats from "./components/Stats";
 import Testimonials from "./components/Testimonials";
 import "./App.css";
+import DiscoverHomepage from "./components/Home";
 
 function App() {
   const [activePage, setActivePage] = useState("home");
@@ -35,8 +36,7 @@ function App() {
 
   return (
     <div className="app-wrapper">
-      <Navbar onNavClick={setActivePage} />
-      <main className="main-content">{renderPage()}</main>
+      <DiscoverHomepage/>
       <Footer />
     </div>
   );
