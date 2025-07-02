@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Heart, Share2 } from 'lucide-react';
-import { Link } from "react-router-dom";
-
 
 const DiscoverHomepage = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -70,20 +68,18 @@ const DiscoverHomepage = () => {
             gap: '30px',
             alignItems: 'center'
           }}>
-            <Link 
-              to="/projects"
+            <a 
+              href="/projects" 
               style={{ color: 'white', textDecoration: 'none', fontSize: '20px', cursor: 'pointer' }}
             >
-            Projects
-            </Link>
-
-            <Link 
-              to="/about"
+              Projects
+            </a>
+            <a 
+              href="/about" 
               style={{ color: 'rgba(255, 255, 255, 0.8)', textDecoration: 'none', fontSize: '20px', cursor: 'pointer' }}
             >
-            About
-            </Link>
-
+              About
+            </a>
           </div>
           
           <div style={{
